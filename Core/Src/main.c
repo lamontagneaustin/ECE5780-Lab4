@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -15,46 +14,21 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+	
 #include "main.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
+/**
+	* @brief Transmits char through USART3.
+	* @retval None
+	*/
+void character_transmit(char test){
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
+	while (!(USART3->ISR &= 0x80)){
+	}
+	USART3->TDR = 0x41;
+}
 
 /**
   * @brief  The application entry point.
@@ -62,40 +36,28 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
+	
+	RCC->AHBENR  |= (RCC_AHBENR_GPIOBEN)|(RCC_AHBENR_GPIOCEN); // Enables the GPIOB/GPIOC clock in the RCC.
+	RCC->APB1ENR |= (RCC_APB1ENR_USART3EN); // Enables the USART3 clock in the RCC.
+	
+	// Configuring PB10 and PB11 for Alternate Function Mode USART3 TX and RX.
+	GPIOB->MODER  |=  (1 << 21) | (1 << 23);   // Sets PB10 and PB11 To Alternate Function Mode(1 bits).
+	GPIOB->MODER  &= ~((1 << 20) | (1 << 22)); // Sets PB10 and PB11 To Alternate Function Mode(0 bits).
+	GPIOB->AFR[1] &= ~((1 << 8)|(1 << 9)|(1 << 11)); // Selects Function Mode USART3_TX for PB10 (0 bits).
+	GPIOB->AFR[1] |=  (1 << 10); // Selects Function Mode USART3_TX for PB10 (1 bits).
+	GPIOB->AFR[1] &= ~((1 << 12)|(1 << 13)|(1 << 15)); // Selects Function Mode USART3_RX for PB11 (0 bits).
+	GPIOB->AFR[1] |=  (1 << 14); // Selects Function Mode USART3_RX for PB11 (1 bits).
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	USART3->BRR = 0x45; // Sets BRR to 69, making Baud Rate 115200 (115942 actual).
+	USART3->CR1 |= (1 << 0) | (1 << 2) | (1 << 3); // USART Enable to 1, Transmitter Enable, and Reciever Enable.
+	
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+		character_transmit('a');
+		HAL_Delay(1000);
   }
-  /* USER CODE END 3 */
 }
 
 /**
