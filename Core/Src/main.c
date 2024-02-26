@@ -23,11 +23,20 @@ void SystemClock_Config(void);
 	* @brief Transmits char through USART3.
 	* @retval None
 	*/
-void character_transmit(char test){
+void character_transmit(char transmit_char){
 
 	while (!(USART3->ISR &= 0x80)){
 	}
-	USART3->TDR = 0x41;
+	USART3->TDR = transmit_char;
+}
+
+void string_transmit(char transmit_string[]){
+	int i = 0;
+	while(transmit_string[i] != 0){
+		character_transmit(transmit_string[i]);
+	i++;
+	}
+	return;
 }
 
 /**
@@ -55,7 +64,8 @@ int main(void)
 	
   while (1)
   {
-		character_transmit('a');
+		//character_transmit('~');
+		string_transmit("Hello World!");
 		HAL_Delay(1000);
   }
 }
