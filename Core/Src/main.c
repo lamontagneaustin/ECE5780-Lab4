@@ -149,14 +149,17 @@ int main(void)
 			if(temp == 'r' | temp == 'R'){
 				toggleRED();
 			}
-			if(temp == 'b' | temp == 'B'){
+			else if(temp == 'b' | temp == 'B'){
 				toggleBLUE();
 			}
-			if(temp == 'g' | temp == 'G'){
+			else if(temp == 'g' | temp == 'G'){
 				toggleGREEN();
 			}
-			if(temp == 'o' | temp == 'O'){
+			else if(temp == 'o' | temp == 'O'){
 				toggleORANGE();
+			}
+			else{
+				string_transmit("Non-Allowed Keystroke. Type 'r', 'g', 'b', or 'o'.");
 			}
 		}
 	}
