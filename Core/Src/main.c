@@ -30,6 +30,10 @@ void character_transmit(char transmit_char){
 	USART3->TDR = transmit_char;
 }
 
+/**
+	* @brief Transmits string through USART3.
+	* @retval None
+	*/
 void string_transmit(char transmit_string[]){
 	int i = 0;
 	while(transmit_string[i] != 0){
@@ -40,16 +44,88 @@ void string_transmit(char transmit_string[]){
 }
 
 /**
+	* @brief Toggles RED LED.
+	* @retval None
+	*/
+void toggleRED(void){
+	// Toggle Pin PC6 (RED).
+	if(GPIOC->IDR & 0x40){
+		GPIOC->BSRR |= (1 << 22); // Resets State of PC6.
+	}
+	else{
+		GPIOC->BSRR |= (1 << 6); // Sets State of PC6.
+	}
+}
+
+/**
+	* @brief Toggles BLUE LED.
+	* @retval None
+	*/
+void toggleBLUE(void){
+	// Toggle Pin PC7 (BLUE).
+	if(GPIOC->IDR & 0x80){
+		GPIOC->BSRR |= (1 << 23); // Resets State of PC6.
+	}
+	else{
+		GPIOC->BSRR |= (1 << 7); // Sets State of PC6.
+	}
+}
+
+/**
+	* @brief Toggles ORANGE LED.
+	* @retval None
+	*/
+void toggleORANGE(void){
+	// Toggle Pin PC8 (ORANGE).
+	if(GPIOC->IDR & 0x100){
+		GPIOC->BSRR |= (1 << 24); // Resets State of PC8.
+	}
+	else{
+		GPIOC->BSRR |= (1 << 8); // Sets State of PC8.
+	}
+}
+
+/**
+	* @brief Toggles GREEN LED.
+	* @retval None
+	*/
+void toggleGREEN(void){
+	// Toggle Pin PC9 (GREEN).
+	if(GPIOC->IDR & 0x200){
+		GPIOC->BSRR |= (1 << 25); // Resets State of PC9.
+	}
+	else{
+		GPIOC->BSRR |= (1 << 9); // Sets State of PC9.
+	}
+}
+
+
+
+/**
   * @brief  The application entry point.
   * @retval int
   */
 int main(void)
 {
+	char temp;
+	
   HAL_Init();
   SystemClock_Config();
 	
 	RCC->AHBENR  |= (RCC_AHBENR_GPIOBEN)|(RCC_AHBENR_GPIOCEN); // Enables the GPIOB/GPIOC clock in the RCC.
 	RCC->APB1ENR |= (RCC_APB1ENR_USART3EN); // Enables the USART3 clock in the RCC.
+	
+	// Configures GPIOC Pins 8 and 9 (ORANGE LED and GREEN LED)
+	GPIOC->MODER   |=  (1 << 16) | (1 << 18);
+	GPIOC->OTYPER  &= ~((1 << 8) | (1 << 9));
+	GPIOC->OSPEEDR &= ~((1 << 16) | (1 << 18));
+	GPIOC->PUPDR   &= ~((1 << 16) | (1 << 17) | (1 << 18) | (1 << 19));
+	
+	// Configures GPIOC Pins 6 and 7 (RED LED and BLUE LED)
+	GPIOC->MODER   |=  (1 << 12) | (1 << 14);
+	GPIOC->OTYPER  &= ~((1 << 6) | (1 << 7));
+	GPIOC->OSPEEDR &= ~((1 << 12) | (1 << 14));
+	GPIOC->PUPDR   &= ~((1 << 12) | (1 << 13) | (1 << 14) | (1 << 15));
 	
 	// Configuring PB10 and PB11 for Alternate Function Mode USART3 TX and RX.
 	GPIOB->MODER  |=  (1 << 21) | (1 << 23);   // Sets PB10 and PB11 To Alternate Function Mode(1 bits).
@@ -65,9 +141,25 @@ int main(void)
   while (1)
   {
 		//character_transmit('~');
-		string_transmit("Hello World!");
-		HAL_Delay(1000);
-  }
+		//string_transmit("Hello World!");
+		//HAL_Delay(1000);
+		
+		if(USART3->ISR &= 0x20){
+			temp = USART3->RDR;
+			if(temp == 'r' | temp == 'R'){
+				toggleRED();
+			}
+			if(temp == 'b' | temp == 'B'){
+				toggleBLUE();
+			}
+			if(temp == 'g' | temp == 'G'){
+				toggleGREEN();
+			}
+			if(temp == 'o' | temp == 'O'){
+				toggleORANGE();
+			}
+		}
+	}
 }
 
 /**
