@@ -19,6 +19,10 @@
 
 void SystemClock_Config(void);
 
+char globalTemp1;
+char globalTemp2;
+char globalFlag;
+
 /**
 	* @brief Transmits char through USART3.
 	* @retval None
@@ -58,16 +62,42 @@ void toggleRED(void){
 }
 
 /**
+	* @brief Sets RED LED.
+	* @retval None
+	*/
+void setRED(char value){
+	if(value == '1'){
+		GPIOC->BSRR |= (1 << 6); // Sets State of PC6.
+	}
+	else if(value == '0'){
+		GPIOC->BSRR |= (1 << 22); // Resets State of PC6.
+	}
+}
+
+/**
 	* @brief Toggles BLUE LED.
 	* @retval None
 	*/
 void toggleBLUE(void){
 	// Toggle Pin PC7 (BLUE).
 	if(GPIOC->IDR & 0x80){
-		GPIOC->BSRR |= (1 << 23); // Resets State of PC6.
+		GPIOC->BSRR |= (1 << 23); // Resets State of PC7.
 	}
 	else{
-		GPIOC->BSRR |= (1 << 7); // Sets State of PC6.
+		GPIOC->BSRR |= (1 << 7); // Sets State of PC7.
+	}
+}
+
+/**
+	* @brief Sets BLUE LED.
+	* @retval None
+	*/
+void setBLUE(char value){
+	if(value == '1'){
+		GPIOC->BSRR |= (1 << 7); // Sets State of PC7.
+	}
+	else if(value == '0'){
+		GPIOC->BSRR |= (1 << 23); // Resets State of PC7.
 	}
 }
 
@@ -86,6 +116,19 @@ void toggleORANGE(void){
 }
 
 /**
+	* @brief Sets ORANGE LED.
+	* @retval None
+	*/
+void setORANGE(char value){
+	if(value == '1'){
+		GPIOC->BSRR |= (1 << 8); // Sets State of PC8.
+	}
+	else if(value == '0'){
+		GPIOC->BSRR |= (1 << 24); // Resets State of PC8.
+	}
+}
+
+/**
 	* @brief Toggles GREEN LED.
 	* @retval None
 	*/
@@ -99,7 +142,72 @@ void toggleGREEN(void){
 	}
 }
 
+/**
+	* @brief Sets GREEN LED.
+	* @retval None
+	*/
+void setGREEN(char value){
+	if(value == '1'){
+		GPIOC->BSRR |= (1 << 9); // Sets State of PC9.
+	}
+	else if(value == '0'){
+		GPIOC->BSRR |= (1 << 25); // Resets State of PC9.
+	}
+}
 
+void RESETFLAGS(void){
+	string_transmit(" CMD:");
+	globalFlag = 0x0;
+}
+
+void SOLVEPROBLEM(void){
+	if(globalFlag == 0x2){
+			if(globalTemp1 == 'r' | globalTemp1 == 'R'){
+				if(globalTemp2 == '2'){
+					toggleRED();
+				}
+				else if(globalTemp2 == '1' | globalTemp2 == '0'){
+					setRED(globalTemp2);
+				}
+				else{string_transmit(" UNKNOWN COMMAND.");}
+				RESETFLAGS();
+			}
+			else if(globalTemp1 == 'b' | globalTemp1 == 'B'){
+				if(globalTemp2 == '2'){
+					toggleBLUE();
+				}
+				else if(globalTemp2 == '1' | globalTemp2 == '0'){
+					setBLUE(globalTemp2);
+				}
+				else{string_transmit(" UNKNOWN COMMAND.");}
+				RESETFLAGS();
+			}
+			else if(globalTemp1 == 'g' | globalTemp1 == 'G'){
+				if(globalTemp2 == '2'){
+					toggleGREEN();
+				}
+				else if(globalTemp2 == '1' | globalTemp2 == '0'){
+					setGREEN(globalTemp2);
+				}
+				else{string_transmit(" UNKNOWN COMMAND.");}
+				RESETFLAGS();
+			}
+			else if(globalTemp1 == 'o' | globalTemp1 == 'O'){
+				if(globalTemp2 == '2'){
+					toggleORANGE();
+				}
+				else if(globalTemp2 == '1' | globalTemp2 == '0'){
+					setORANGE(globalTemp2);
+				}
+				else{string_transmit(" UNKNOWN COMMAND.");}
+				RESETFLAGS();
+			}
+			else{
+				string_transmit(" UNKNOWN COMMAND.");
+				RESETFLAGS();
+			}
+		}
+}
 
 /**
   * @brief  The application entry point.
@@ -108,6 +216,9 @@ void toggleGREEN(void){
 int main(void)
 {
 	char temp;
+	globalTemp1 = 0x0;
+	globalTemp2 = 0x0;
+	globalFlag = 0x0;
 	
   HAL_Init();
   SystemClock_Config();
@@ -135,16 +246,21 @@ int main(void)
 	GPIOB->AFR[1] &= ~((1 << 12)|(1 << 13)|(1 << 15)); // Selects Function Mode USART3_RX for PB11 (0 bits).
 	GPIOB->AFR[1] |=  (1 << 14); // Selects Function Mode USART3_RX for PB11 (1 bits).
 
+	USART3->CR1 |= (1 << 5); // RXNE(Recieve Register Not Empty) interrupt enable to 1. 
 	USART3->BRR = 0x45; // Sets BRR to 69, making Baud Rate 115200 (115942 actual).
 	USART3->CR1 |= (1 << 0) | (1 << 2) | (1 << 3); // USART Enable to 1, Transmitter Enable, and Reciever Enable.
 	
+	NVIC_EnableIRQ(USART3_4_IRQn);
+	
+	string_transmit(" CMD:");
   while (1)
   {
 		//character_transmit('~');
 		//string_transmit("Hello World!");
 		//HAL_Delay(1000);
 		
-		if(USART3->ISR &= 0x20){
+		/*
+		if(USART3->ISR &= 0x20){ // If USART_RDR has data.
 			temp = USART3->RDR;
 			if(temp == 'r' | temp == 'R'){
 				toggleRED();
@@ -162,7 +278,23 @@ int main(void)
 				string_transmit("Non-Allowed Keystroke. Type 'r', 'g', 'b', or 'o'.");
 			}
 		}
+		*/
+		SOLVEPROBLEM();
 	}
+}
+
+void USART3_4_IRQHandler(void) {
+	if(globalFlag == 0x0){
+		globalTemp1 = USART3->RDR;
+		character_transmit(globalTemp1);
+		globalFlag = 0x1;
+	}
+	else if(globalFlag == 0x1){
+		globalTemp2 = USART3->RDR;
+		character_transmit(globalTemp2);
+		globalFlag = 0x2;
+	}
+	else{ globalFlag = 0x0; }
 }
 
 /**
