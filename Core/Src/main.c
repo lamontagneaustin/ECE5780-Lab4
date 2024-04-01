@@ -155,11 +155,19 @@ void setGREEN(char value){
 	}
 }
 
+/**
+	* @brief Resets global flag.
+	* @retval None
+	*/
 void RESETFLAGS(void){
 	string_transmit(" CMD:");
 	globalFlag = 0x0;
 }
 
+/**
+	* @brief Parser for 2 Character Command Code.
+	* @retval None
+	*/
 void SOLVEPROBLEM(void){
 	if(globalFlag == 0x2){
 			if(globalTemp1 == 'r' | globalTemp1 == 'R'){
